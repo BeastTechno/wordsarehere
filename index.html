@@ -5,11 +5,179 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"  />
-    <link rel="stylesheet" href="style.css">
     <title>Dictonrary App</title>
 </head>
 <body>
+<style>@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
 
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    body{
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        background: #4d59fb;
+    }
+    
+    .wrapper{
+        background: #fff;
+        width: 420px;
+        border-radius: 7px;
+        padding: 28px 28px 45px;
+    }
+    
+    .wrapper header{
+        font-size: 28px;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .wrapper .search{
+        margin: 35px 0 18px;
+        position: relative;
+    }
+    
+    .wrapper .search input{
+        width: 100%;
+        padding: 0 42px ;
+        height: 53px;
+        border-radius: 5px;
+        border: 1px solid #999;
+        outline: none;
+    }
+    
+    input::placeholder{
+        color: #b8b8b8; 
+    }
+    
+    .wrapper .search input:focus{
+        border: 2px solid #4d59fb;
+        padding: 0 41px;
+    }
+    
+    .search :where(i,span){
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .search i{
+        left: 18px;
+        pointer-events: none;
+        font-size: 16px;
+    }
+    
+    .wrapper .search input:focus ~ i{
+        color: #4d59fb;
+    }
+    
+    .search span{
+       right: 15px;
+       font-size: 18px;
+       cursor: pointer;
+       display: none;
+    }
+    
+    .search input:valid ~ span{
+        display: block;
+    }
+    
+    .wrapper.active ul{
+        display: block;
+    }
+    
+    .wrapper.active .info-text{
+        display: none;
+    }
+    
+    .wrapper .info-text{
+        margin: -3px 0 -10px;
+        font-size: 13px;
+        color: #9a9a9a;
+        transition: all .3s ease;
+    }
+    
+    .info-text span{
+        font-weight: 500;
+    }
+    
+    .wrapper ul{
+        display: none;
+        transition: all .3s ease;
+    }
+    
+    ul .content{
+        max-height: 215px;
+        overflow-y: auto;
+    }
+    
+    ul .content::-webkit-scrollbar{
+        width: 0;
+    }
+    
+    .wrapper ul li{
+        display: flex;
+        margin-bottom: 14px;
+        padding-bottom: 17px;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #ccc;
+    }
+    
+    .wrapper ul li:last-child{
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+    
+    ul .word p{
+        font-size: 22px;
+        font-weight:  500;
+    }
+    
+    ul .word span{
+        font-size: 12px;
+        color: #989898;
+    }
+    
+    ul .word i{
+        cursor: pointer;
+        font-size: 15px;
+        color: #999;
+    }
+    
+    .content li .details{
+        padding-left: 10px;
+        border-radius: 4px 0 0 4px;
+        border-left: 3px solid #4d59fb;
+    }
+    
+    .content li p{
+        font-size: 17px;
+        font-weight: 500;
+    }
+    
+    .content li span{
+        font-size: 15px;
+        color: #7e7e7e;
+    }
+    
+    .synonyms .details .list{
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .synonyms .details .list span{
+        margin-right: 5px;
+        text-decoration: underline;
+        cursor: pointer;
+    }</style>
     <div class="wrapper">
         <header>English Dictonrary</header>
         <div class="search">
@@ -49,6 +217,78 @@
         </ul>
     </div>
 
-    <script src="script.js"></script>
+    <script>const wrapper = document.querySelector(".wrapper"),
+        searchInput = wrapper.querySelector("input"),
+        volume = wrapper.querySelector(".word i"),
+        infoText = wrapper.querySelector(".info-text"),
+        synonyms = wrapper.querySelector(".synonyms .list"),
+        removeIcon = wrapper.querySelector(".search span");
+        let audio;
+        
+        function data(result, word){
+            if(result.title){
+                infoText.innerHTML = `Can't find the meaning of <span>"${word}"</span>. Please, try to search for another word.`;
+            }else{
+                console.log(result)
+                wrapper.classList.add("active");
+                let definitions = result[0].meanings[0].definitions[0],
+                phontetics = `${result[0].meanings[0].partOfSpeech}  /${result[0].phonetics[0].text}/`;
+                document.querySelector(".word p").innerText = result[0].word;
+                document.querySelector(".word span").innerText = phontetics;
+                document.querySelector(".meaning span").innerText = definitions.definition;
+                document.querySelector(".example span").innerText = definitions.example;
+                audio = new Audio(result[0].phonetics[0].audio);
+        
+                if(definitions.synonyms[0] == undefined){
+                    synonyms.parentElement.style.display = "none";
+                }else{
+                    synonyms.parentElement.style.display = "block";
+                    synonyms.innerHTML = "";
+                    for (let i = 0; i < 5; i++) {
+                        let tag = `<span onclick="search('${definitions.synonyms[i]}')">${definitions.synonyms[i]},</span>`;
+                        tag = i == 4 ? tag = `<span onclick="search('${definitions.synonyms[i]}')">${definitions.synonyms[4]}</span>` : tag;
+                        synonyms.insertAdjacentHTML("beforeend", tag);
+                    }
+                }
+            }
+        }
+        
+        function search(word){
+            fetchApi(word);
+            searchInput.value = word;
+        }
+        
+        function fetchApi(word){
+            wrapper.classList.remove("active");
+            infoText.style.color = "#000";
+            infoText.innerHTML = `Searching the meaning of <span>"${word}"</span>`;
+            let url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+            fetch(url).then(response => response.json()).then(result => data(result, word)).catch(() =>{
+                infoText.innerHTML = `Can't find the meaning of <span>"${word}"</span>. Please, try to search for another word.`;
+            });
+        }
+        
+        searchInput.addEventListener("keyup", e =>{
+            let word = e.target.value.replace(/\s+/g, ' ');
+            if(e.key == "Enter" && word){
+                fetchApi(word);
+            }
+        });
+        
+        volume.addEventListener("click", ()=>{
+            volume.style.color = "#4D59FB";
+            audio.play();
+            setTimeout(() =>{
+                volume.style.color = "#999";
+            }, 800);
+        });
+        
+        removeIcon.addEventListener("click", ()=>{
+            searchInput.value = "";
+            searchInput.focus();
+            wrapper.classList.remove("active");
+            infoText.style.color = "#9A9A9A";
+            infoText.innerHTML = "Type any existing word and press enter to get meaning, example, synonyms, etc.";
+        });</script>
 </body>
 </html>
